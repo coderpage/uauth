@@ -25,6 +25,10 @@ func (resp Response) SetMessage(message interface{}) {
 	resp["Message"] = message
 }
 
+func (resp Response) SetData(data interface{}) {
+	resp["Data"] = data
+}
+
 const (
 	StatusUnprocessableEntity = 422 // 无法处理的请求实体
 	StatusInvalidUserName     = 430 // 无效用户名
