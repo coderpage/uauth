@@ -7,5 +7,6 @@ import (
 )
 
 func Register() {
-	beego.Router("/signup", &controllers.SignUpHandler{}, "post:SignUp")
+	beego.Router("/uauth/signup", &controllers.SignUpHandler{}, "post:SignUp")
+	beego.Router("/uauth/signin", &controllers.SignInHandler{}, "post:SignIn")
 }

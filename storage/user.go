@@ -16,11 +16,11 @@ import (
 func CreateUser(user *models.User) (created bool, err error) {
 	// if user is nil, return error
 	if user == nil {
-		return false, errors.New("0-user must not nil!")
+		return false, errors.New("0-user must not nil")
 	}
 	// if email or pwd is empty, return error
 	if user.Email == "" || user.Password == "" {
-		return false, errors.New("1-user Email or Password must not empty!")
+		return false, errors.New("1-user Email or Password must not empty")
 	}
 
 	encryptoPass, err := doMd5(user.Password)
@@ -46,14 +46,14 @@ func CreateUser(user *models.User) (created bool, err error) {
 		log.Info("Create User Success:", user.String())
 		return true, nil
 	}
-	err = errors.New("3-User Allready Exist!")
+	err = errors.New("3-User Allready Exist")
 	return false, err
 }
 
 // DeleteUser delete user in mysql table `user`, user.Id must be setted
 func DeleteUser(user *models.User) (deleted bool, err error) {
 	if user == nil {
-		return false, errors.New("user must not nil!")
+		return false, errors.New("user must not nil")
 	}
 
 	if user.Id == 0 {
@@ -70,6 +70,34 @@ func DeleteUser(user *models.User) (deleted bool, err error) {
 		log.Warn("Delete Multi User: ", num)
 	}
 	return true, err
+}
+
+// CheckEmailPwd  check user email and password in mysql table user
+func CheckEmailPwd(user *models.User) (err error) {
+	if user == nil {
+		return errors.New("0-user must not nil")
+	}
+
+	if user.Email == "" || user.Password == "" {
+		return errors.New("1-user.Eamil or user.Password must not empty")
+	}
+
+	encryptoPass, err := doMd5(user.Password)
+	if err != nil {
+		log.Error("MD5 ERR:", err)
+		return errors.New("2-MD5 ERR:" + err.Error())
+	}
+	user.Password = encryptoPass
+	o := orm.NewOrm()
+	err = o.Read(user, "Email", "Password")
+
+	if err == orm.ErrNoRows {
+		return errors.New("3-Email or Pwd is wrong")
+	}
+	if err != nil {
+		return errors.New("4-Read Table User Err:" + err.Error())
+	}
+	return nil
 }
 
 // doMd5 return md5-ed data
