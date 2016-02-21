@@ -7,16 +7,17 @@ import (
 
 // User 用户表
 type User struct {
-	Id          int64     `json:"Id"`                         // 主键id
-	UserName    string    `json:"UserName",orm:"size(100)"`   // 用户名
-	Password    string    `json:"Password"`                   // 用户密码
-	Email       string    `json:"Email"`                      // 用户邮箱
-	DisplayName string    `json:"DisplayName"`                // 用户显示的名称
-	Url         string    `json:"Url"`                        // 用户主页
-	Created     time.Time `json:"Created",orm:"auto_now_add"` // 用户注册的时间
-	Activated   time.Time `json:"Activated"`                  // 用户最后活动的时间
-	Logged      time.Time `json:"Logged"`                     // 用户上次登录的时间
-	Group       string    `json:"Group"`                      // 用户组
+	Id          int64     `json:"Id"`                          // 主键id
+	UserName    string    `json:"UserName",orm:"size(100)"`    // 用户名
+	Password    string    `json:"Password"`                    // 用户密码
+	Email       string    `json:"Email"`                       // 用户邮箱
+	DisplayName string    `json:"DisplayName"`                 // 用户显示的名称
+	Url         string    `json:"Url"`                         // 用户主页
+	Created     time.Time `json:"Created",orm:"auto_now_add"`  // 用户注册的时间
+	Activated   time.Time `json:"Activated"`                   // 用户最后活动的时间
+	Logged      time.Time `json:"Logged"`                      // 用户上次登录的时间
+	Group       string    `json:"Group"`                       // 用户组
+	Status      string    `orm:"size(10);default(nonactived)"` // 用户状态 actived nonactived
 }
 
 func (this *User) String() string {
