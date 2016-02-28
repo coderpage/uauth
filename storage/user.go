@@ -31,7 +31,8 @@ func CreateUser(user *models.User) (created bool, err error) {
 
 	// init default UserName DisplayName by Email
 	user.Password = encryptoPass
-	user.UserName, user.DisplayName, user.Created, user.Activated, user.Logged = user.Email, user.Email, time.Now(), time.Now(), time.Now()
+	user.UserName, user.DisplayName, user.Created, user.Activated, user.Logged, user.Group =
+		user.Email, user.Email, time.Now(), time.Now(), time.Now(), models.UserGroupNoActived
 
 	// save user to mysql table `user`
 	o := orm.NewOrm()
@@ -46,8 +47,8 @@ func CreateUser(user *models.User) (created bool, err error) {
 		log.Info("Create User Success:", user.String())
 		return true, nil
 	}
-	err = errors.New("3-User Allready Exist")
-	return false, err
+
+	return false, ErrRowExist
 }
 
 // DeleteUser delete user in mysql table `user`, user.Id must be setted
@@ -72,6 +73,29 @@ func DeleteUser(user *models.User) (deleted bool, err error) {
 	return true, err
 }
 
+// FindUserById 通过 User:Id 查询 User
+func FindUserById(uid int64) (user *models.User, err error) {
+	o := orm.NewOrm()
+	user = &models.User{Id: uid}
+	err = o.Read(user, "Id")
+	if err != nil {
+		return nil, ErrNoRows
+	}
+	return user, nil
+}
+
+func UpdateUser(user *models.User, columns ...string) (err error) {
+	o := orm.NewOrm()
+
+	if user != nil && user.Id == 0 {
+		return errors.New("user is nil or miss user pk:Id")
+	}
+
+	_, err = o.Update(user, columns...)
+
+	return err
+}
+
 // CheckEmailPwd  check user email and password in mysql table user
 func CheckEmailPwd(user *models.User) (err error) {
 	if user == nil {
@@ -92,7 +116,7 @@ func CheckEmailPwd(user *models.User) (err error) {
 	err = o.Read(user, "Email", "Password")
 
 	if err == orm.ErrNoRows {
-		return errors.New("3-Email or Pwd is wrong")
+		return ErrNoRows
 	}
 	if err != nil {
 		return errors.New("4-Read Table User Err:" + err.Error())

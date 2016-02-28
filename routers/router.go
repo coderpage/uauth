@@ -9,4 +9,5 @@ import (
 func Register() {
 	beego.Router("/uauth/signup", &controllers.SignUpHandler{}, "post:SignUp")
 	beego.Router("/uauth/signin", &controllers.SignInHandler{}, "post:SignIn")
+	beego.Router("/uauth/user/active", &controllers.UserActiveHandler{}, "get:ActiveFromEmail")
 }
