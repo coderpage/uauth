@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"time"
 	"uauth/models"
 	"uauth/storage"
+	"uauth/tools/secure"
 )
 
 type SignInHandler struct {
@@ -27,8 +30,8 @@ func (this *SignInHandler) SignIn() {
 		return
 	}
 
-	user := new(models.User)
-	err = json.Unmarshal(bodyBytes, user)
+	rspBd := make(map[string]string)
+	err = json.Unmarshal(bodyBytes, &rspBd)
 	if err != nil {
 		log.Error("Parse Request Body Err:", err)
 		resp.SetStatus(StatusUnprocessableEntity)
@@ -38,6 +41,12 @@ func (this *SignInHandler) SignIn() {
 		return
 	}
 
+	email := rspBd["Email"]
+	pwd := rspBd["Password"]
+	web := rspBd["Web"]
+	duration := rspBd["Duration"]
+
+	user := &models.User{Email: email, Password: pwd}
 	if user.Email == "" || user.Password == "" {
 		log.Error("Parse Request Body Err:", err)
 
@@ -62,9 +71,33 @@ func (this *SignInHandler) SignIn() {
 			this.ServeJSON()
 			return
 		}
+
+		durationInt, err := strconv.Atoi(duration)
+		if err != nil {
+			resp.SetStatus(StatusUnprocessableEntity)
+			resp.SetMessage("duration must type of int")
+			this.Data["json"] = resp
+			this.ServeJSON()
+			return
+		}
+
+		token := secure.GenerateToken(32)
+		expiry := time.Now().Add(time.Duration(durationInt) * time.Hour)
+		auth := &models.Auth{Uid: user.Id, Token: token, Server: web, Status: "ok", Type: models.AuthTypeUserSignIn, ExpiryDate: expiry}
+		_, err = storage.AddNewAuth(auth)
+		if err != nil {
+			log.Error("save auth failed:", err)
+			resp.SetStatus(http.StatusInternalServerError)
+			resp.SetMessage("save token failed")
+			this.Data["json"] = resp
+			this.ServeJSON()
+			return
+		}
+
 		resp.SetStatus(http.StatusOK)
 		resp.SetMessage("OK")
-		resp.SetData(user)
+		resp.SetData("User", user)
+		resp.SetData("AuthToken", token)
 		this.Data["json"] = resp
 		this.ServeJSON()
 		return
