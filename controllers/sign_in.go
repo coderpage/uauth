@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"uauth/models"
 	"uauth/storage"
 )
@@ -56,6 +55,13 @@ func (this *SignInHandler) SignIn() {
 	err = storage.CheckEmailPwd(user)
 	if err == nil {
 		log.Info("Sign In Success:", user.String())
+		if user.Group == models.UserGroupNoActived {
+			resp.SetStatus(http.StatusUnauthorized)
+			resp.SetMessage("user not actived")
+			this.Data["json"] = resp
+			this.ServeJSON()
+			return
+		}
 		resp.SetStatus(http.StatusOK)
 		resp.SetMessage("OK")
 		resp.SetData(user)
@@ -64,10 +70,7 @@ func (this *SignInHandler) SignIn() {
 		return
 	}
 
-	errMsg := strings.Split(err.Error(), "-")
-	errCode := errMsg[0]
-	// errCode == 3, user exist
-	if errCode == "3" {
+	if err == storage.ErrNoRows {
 		log.Info("Sign In Err: Email or Password is wrong")
 		resp.SetStatus(StatusUserExist)
 		resp.SetMessage("Email or Password is wrong")

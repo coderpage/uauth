@@ -2,13 +2,15 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
-	"uauth/controllers/mail"
+	"time"
 	"uauth/models"
 	"uauth/storage"
+	"uauth/tools/mail"
+	"uauth/tools/secure"
 
 	"github.com/astaxie/beego"
 )
@@ -32,8 +34,9 @@ func (this *SignUpHandler) SignUp() {
 		return
 	}
 
-	user := new(models.User)
-	err = json.Unmarshal(bodyBytes, user)
+	user := &models.User{}
+	rqsBd := make(map[string]string)
+	err = json.Unmarshal(bodyBytes, &rqsBd)
 	if err != nil {
 		log.Error("Parse Request Body Err:", err)
 		resp.SetStatus(StatusUnprocessableEntity)
@@ -43,6 +46,10 @@ func (this *SignUpHandler) SignUp() {
 		return
 	}
 
+	user.Email = rqsBd["Email"]
+	user.Password = rqsBd["Password"]
+	// 邮件激活链接，验证后跳转链接
+	activeRedirect := rqsBd["redirect"]
 	if user.Email == "" || user.Password == "" {
 		log.Error("Parse Request Body Err:", err)
 
@@ -64,14 +71,13 @@ func (this *SignUpHandler) SignUp() {
 		resp.SetMessage("OK")
 		this.Data["json"] = resp
 		this.ServeJSON()
-		sendActiveEmail(user, "abc", "#")
+
+		sendActiveEmail(user, activeRedirect)
 		return
 	}
 
-	errMsg := strings.Split(err.Error(), "-")
-	errCode := errMsg[0]
 	// errCode == 3, user exist
-	if errCode == "3" {
+	if err == storage.ErrRowExist {
 		log.Error("Create New User Err: User Exist")
 		resp.SetStatus(StatusUserExist)
 		resp.SetMessage("User Exist")
@@ -88,16 +94,25 @@ func (this *SignUpHandler) SignUp() {
 }
 
 // sendActiveEmail 发送激活邮件
-// activeToken 激活码
 // redirectUrl uAuth 验证后重定向的地址
-func sendActiveEmail(user *models.User, activeToken, redirectUrl string) (err error) {
+func sendActiveEmail(user *models.User, redirectUrl string) (err error) {
+
+	activeToken := secure.GenerateToken(32)
+	expire := time.Now().Add(24 * time.Hour)
+	auth := &models.Auth{Uid: user.Id, Token: activeToken, Type: models.AuthTypeUserActive, ExpiryDate: expire}
+
+	_, err = storage.AddNewAuth(auth)
+	if err != nil {
+		return errors.New("Add Auth Err:" + err.Error())
+	}
+
 	mailer, err := mail.NewServiceMailer()
 	if err != nil {
 		log.Error("Send Active Email Err:", err)
 		return err
 	}
 
-	activeUrl := beego.AppConfig.String("serverbaseurl") + "/user/active?active=" + activeToken + "&redirect=" + redirectUrl
+	activeUrl := beego.AppConfig.String("serverbaseurl") + "/uauth/user/active?active=" + activeToken + "&redirect=" + redirectUrl
 	body := fmt.Sprintf(`	尊敬的 %s 您好！
 <br>
 点击 <a href="%s">链接</a> 可激活您的的账号！
