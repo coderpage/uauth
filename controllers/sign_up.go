@@ -49,7 +49,7 @@ func (this *SignUpHandler) SignUp() {
 	user.Email = rqsBd["Email"]
 	user.Password = rqsBd["Password"]
 	// 邮件激活链接，验证后跳转链接
-	activeRedirect := rqsBd["redirect"]
+	activeRedirect := rqsBd["Redirect"]
 	if user.Email == "" || user.Password == "" {
 		log.Error("Parse Request Body Err:", err)
 

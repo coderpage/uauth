@@ -9,7 +9,7 @@ import (
 type User struct {
 	Id          int64     `json:"Id"`                              // 主键id
 	UserName    string    `json:"UserName" orm:"size(100)"`        // 用户名
-	Password    string    `json:"Password"`                        // 用户密码
+	Password    string    `json:"-"`                               // 用户密码
 	Email       string    `json:"Email"`                           // 用户邮箱
 	DisplayName string    `json:"DisplayName"`                     // 用户显示的名称
 	Url         string    `json:"Url"`                             // 用户主页
@@ -20,10 +20,6 @@ type User struct {
 }
 
 func (this *User) String() string {
-	if this == nil {
-		return "User: nil"
-	}
-
 	// str := fmt.Sprintf("User: {Id:%d  UserName:%s  Password:%s  Email:%s  DisplayName:%s  Group:%s}", this.Id, this.UserName, this.Password, this.Email, this.DisplayName, this.Group)
 	return this.JsonString()
 }

@@ -25,8 +25,8 @@ func (resp Response) SetMessage(message interface{}) {
 	resp["Message"] = message
 }
 
-func (resp Response) SetData(data interface{}) {
-	resp["Data"] = data
+func (resp Response) SetData(name string, data interface{}) {
+	resp[name] = data
 }
 
 const (
