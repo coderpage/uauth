@@ -61,6 +61,47 @@ BaseURL: localhost:9090
 curl -i -X POST -H "Content-Type: application/json" http://localhost:9090/uauth/signup -d '{"Email":"820631390@qq.com","Password":"123456","Redirect":"http://www.coderpage.com"}'
 ```
 
+## 重新发送激活邮件 ##
+**URL:** `/uauth/user/active/sendemail`
+
+**Method:** `POST`
+
+**POST BODY: **
+
+```
+  {
+    "Email" : "xxx",
+    "Redirect" : "xxx"
+  }
+```
+
+> *Email*: 注册邮箱<br>
+> *Redirect*: 回调地址，注册成功后会向邮箱中发送激活链接，激活成功后，会重定向此链接<br>
+
+**Response**
+
+```
+  {
+    "Status" : code,
+    "Message" : "xxx"
+  }
+```
+**Status 说明：**
+
+|Status|说明|
+|---|---|
+|200|成功|
+|400|请求参数错误|
+|404|用户不存在|
+|436|发送邮件失败|
+
+**curl 测试**
+
+```
+curl -i -X POST -H "Content-Type: application/json" http://localhost:9090/uauth/user/active/sendemail -d '{"Email":"820631390@qq.com","Redirect":"http://www.coderpage.com"}'
+```
+
+
 ## 登录 ##
 
 **URL:** `/uauth/signin`

@@ -9,6 +9,7 @@ const (
 	StatusUserNotExist        = 433 // 用户不存在
 	StatusUserNotActivated    = 434 // 用户未激活
 	StatusWrongUserNameOrPwd  = 435 // 用户名或密码错误
+	StatusSendEmailFailed     = 436 // 发送邮件失败
 )
 
 var statusText = map[int]string{
