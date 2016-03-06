@@ -55,6 +55,11 @@ func (this *UserActiveHandler) ActiveFromEmail() {
 		return
 	}
 
-	redirect = fmt.Sprintf(redirect+"?status=%d&msg=%s", http.StatusOK, "user actived success")
-	this.Redirect(redirect, 302)
+	if redirect != "" {
+		redirect = fmt.Sprintf(redirect+"?status=%d&msg=%s", http.StatusOK, "user actived success")
+		this.Redirect(redirect, 302)
+	} else {
+		this.Ctx.WriteString("200! user actived success")
+	}
+
 }
