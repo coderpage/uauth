@@ -81,19 +81,14 @@ func (this *ResetPwdHandler) FindPwdByEmail() {
 // AuthResetAction 响应找回密码邮件重置链接，验证此链接合法性，跳转请求服务器
 func (this *ResetPwdHandler) AuthResetAction() {
 	fpwdToken := this.GetString("reset")
-	redirect := this.GetString("redirect")
 
 	if fpwdToken == "" {
-		if redirect != "" {
-			redirect = fmt.Sprintf(redirect+"?status=%d&msg=%s", http.StatusNotFound, "token not found")
-			this.Redirect(redirect, 302)
-		} else {
-			this.Ctx.WriteString("404! token not found!")
-		}
+		this.Ctx.WriteString("404! token not found!")
 		return
 	}
 
 	auth, err := storage.FindAuthByToken(fpwdToken)
+	redirect := auth.Redirect
 	if err != nil {
 		if redirect != "" {
 			redirect = fmt.Sprintf(redirect+"?status=%d&msg=%s", http.StatusNotFound, "token not found")
@@ -226,7 +221,7 @@ func (this *ResetPwdHandler) ResetPwd() {
 func sendFindPwdEmail(user *models.User, redirect string) (err error) {
 	resetToken := secure.GenerateToken(32)
 	expire := time.Now().Add(24 * time.Hour)
-	auth := &models.Auth{Uid: user.Id, Token: resetToken, Type: models.AuthTypeUserFindPwd, ExpiryDate: expire}
+	auth := &models.Auth{Uid: user.Id, Token: resetToken, Type: models.AuthTypeUserFindPwd, Redirect: redirect, ExpiryDate: expire}
 
 	_, err = storage.AddNewAuth(auth)
 	if err != nil {
@@ -239,7 +234,7 @@ func sendFindPwdEmail(user *models.User, redirect string) (err error) {
 		return err
 	}
 
-	resetUrl := beego.AppConfig.String("serverbaseurl") + "/uauth/user/fpwd/email?reset=" + resetToken + "&redirect=" + redirect
+	resetUrl := beego.AppConfig.String("serverbaseurl") + "/uauth/user/fpwd/email?reset=" + resetToken
 	body := fmt.Sprintf(`	尊敬的 %s 您好！
 <br>
 点击 <a href="%s">链接</a> 重置您账户的密码！

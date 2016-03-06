@@ -14,20 +14,15 @@ type UserActiveHandler struct {
 
 func (this *UserActiveHandler) ActiveFromEmail() {
 	activeToken := this.GetString("active", "")
-	redirect := this.GetString("redirect", "")
 	auth, err := storage.FindAuthByToken(activeToken)
 
 	// 没有此 token
 	if err != nil {
-		if redirect != "" {
-			redirect = fmt.Sprintf(redirect+"?status=%d&msg=%s", http.StatusNotFound, "token not found")
-			this.Redirect(redirect, 302)
-		} else {
-			this.Ctx.WriteString("404! token not found!")
-		}
+		this.Ctx.WriteString("404! token not found!")
 		return
 	}
 
+	redirect := auth.Redirect
 	// token 过期
 	if time.Now().After(auth.ExpiryDate) {
 		if redirect != "" {

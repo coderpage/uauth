@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"uauth/models"
 	"uauth/storage"
 )
 
@@ -41,7 +42,7 @@ func (this *UserDataHandler) FindUserWithAuthToken() {
 	authToken := rspBd["AuthToken"]
 	auth, err := storage.FindAuthByToken(authToken)
 	if err != nil {
-		resp.SetStatus(http.StatusUnauthorized)
+		resp.SetStatus(http.StatusForbidden)
 		resp.SetMessage("this token is not available")
 		this.Data["json"] = resp
 		this.ServeJSON()
@@ -49,8 +50,16 @@ func (this *UserDataHandler) FindUserWithAuthToken() {
 	}
 
 	if time.Now().After(auth.ExpiryDate) {
-		resp.SetStatus(http.StatusUnauthorized)
-		resp.SetMessage("this token is not available")
+		resp.SetStatus(http.StatusForbidden)
+		resp.SetMessage("this token is expired")
+		this.Data["json"] = resp
+		this.ServeJSON()
+		return
+	}
+
+	if auth.Type != models.AuthTypeUserSignIn {
+		resp.SetStatus(http.StatusForbidden)
+		resp.SetMessage("Token miss type")
 		this.Data["json"] = resp
 		this.ServeJSON()
 		return
@@ -61,6 +70,14 @@ func (this *UserDataHandler) FindUserWithAuthToken() {
 	if err != nil {
 		resp.SetStatus(http.StatusNotFound)
 		resp.SetMessage("can not find user by this token")
+		this.Data["json"] = resp
+		this.ServeJSON()
+		return
+	}
+
+	if user.Group == models.UserGroupNoActived {
+		resp.SetStatus(StatusUserNotActivated)
+		resp.SetMessage("user not activated")
 		this.Data["json"] = resp
 		this.ServeJSON()
 		return

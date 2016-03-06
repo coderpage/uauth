@@ -99,7 +99,7 @@ func sendActiveEmail(user *models.User, redirectUrl string) (err error) {
 
 	activeToken := secure.GenerateToken(32)
 	expire := time.Now().Add(24 * time.Hour)
-	auth := &models.Auth{Uid: user.Id, Token: activeToken, Type: models.AuthTypeUserActive, ExpiryDate: expire}
+	auth := &models.Auth{Uid: user.Id, Token: activeToken, Type: models.AuthTypeUserActive, Redirect: redirectUrl, ExpiryDate: expire}
 
 	_, err = storage.AddNewAuth(auth)
 	if err != nil {
@@ -112,7 +112,7 @@ func sendActiveEmail(user *models.User, redirectUrl string) (err error) {
 		return err
 	}
 
-	activeUrl := beego.AppConfig.String("serverbaseurl") + "/uauth/user/active?active=" + activeToken + "&redirect=" + redirectUrl
+	activeUrl := beego.AppConfig.String("serverbaseurl") + "/uauth/user/active?active=" + activeToken
 	body := fmt.Sprintf(`	尊敬的 %s 您好！
 <br>
 点击 <a href="%s">链接</a> 可激活您的的账号！
