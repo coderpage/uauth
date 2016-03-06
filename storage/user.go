@@ -1,14 +1,12 @@
 package storage
 
 import (
-	"encoding/hex"
 	"uauth/models"
 
-	"crypto/md5"
 	"errors"
-	"time"
-
 	"github.com/astaxie/beego/orm"
+	"time"
+	"uauth/tools/secure"
 )
 
 // CreateUser create a new user in mysql, if user is allready exist in table `user`,
@@ -23,7 +21,7 @@ func CreateUser(user *models.User) (created bool, err error) {
 		return false, errors.New("1-user Email or Password must not empty")
 	}
 
-	encryptoPass, err := doMd5(user.Password)
+	encryptoPass, err := secure.DoMd5(user.Password)
 	if err != nil {
 		log.Error("MD5 ERR:", err)
 		return false, errors.New("2-MD5 ERR:" + err.Error())
@@ -84,6 +82,18 @@ func FindUserById(uid int64) (user *models.User, err error) {
 	return user, nil
 }
 
+// FindUserByEmail 通过 User:Email 查询 User
+func FindUserByEmail(email string) (user *models.User, err error) {
+	o := orm.NewOrm()
+	user = &models.User{Email: email}
+	err = o.Read(user, "Email")
+	if err != nil {
+		return nil, ErrNoRows
+	}
+
+	return user, nil
+}
+
 func UpdateUser(user *models.User, columns ...string) (err error) {
 	o := orm.NewOrm()
 
@@ -106,7 +116,7 @@ func CheckEmailPwd(user *models.User) (err error) {
 		return errors.New("1-user.Eamil or user.Password must not empty")
 	}
 
-	encryptoPass, err := doMd5(user.Password)
+	encryptoPass, err := secure.DoMd5(user.Password)
 	if err != nil {
 		log.Error("MD5 ERR:", err)
 		return errors.New("2-MD5 ERR:" + err.Error())
@@ -122,16 +132,4 @@ func CheckEmailPwd(user *models.User) (err error) {
 		return errors.New("4-Read Table User Err:" + err.Error())
 	}
 	return nil
-}
-
-// doMd5 return md5-ed data
-func doMd5(data string) (encrypto string, err error) {
-	md5Hash := md5.New()
-	_, err = md5Hash.Write([]byte(data))
-	if err != nil {
-		return "", err
-	}
-	hashedBytes := md5Hash.Sum(nil)
-	hashedData := hex.EncodeToString(hashedBytes)
-	return hashedData, nil
 }
