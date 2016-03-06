@@ -9,5 +9,6 @@ type Auth struct {
 	Server     string    // 授权网站
 	Status     string    // 状态
 	Type       string    // 授权类型
+	Redirect   string    // 回调
 	ExpiryDate time.Time // 有效期
 }

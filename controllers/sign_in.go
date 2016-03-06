@@ -20,6 +20,7 @@ func (this *SignInHandler) SignIn() {
 
 	body := this.Ctx.Request.Body
 	defer body.Close()
+	// 读取 Post 内容
 	bodyBytes, err := ioutil.ReadAll(body)
 	if err != nil {
 		log.Error("Read Request Body Err:", err)
@@ -46,36 +47,31 @@ func (this *SignInHandler) SignIn() {
 	web := rspBd["Web"]
 	duration := rspBd["Duration"]
 
-	user := &models.User{Email: email, Password: pwd}
-	if user.Email == "" || user.Password == "" {
-		log.Error("Parse Request Body Err:", err)
-
-		if user.Email == "" {
-			resp.SetStatus(StatusInvalidUserName)
-		} else {
-			resp.SetStatus(StatusInvalidPwd)
-		}
-		resp.SetMessage("Parse Body Failed")
+	durationInt, err := strconv.Atoi(duration)
+	if err != nil {
+		resp.SetStatus(http.StatusBadRequest)
+		resp.SetMessage("duration must type of int")
 		this.Data["json"] = resp
 		this.ServeJSON()
 		return
 	}
 
+	if email == "" || pwd == "" {
+		resp.SetStatus(http.StatusBadRequest)
+		resp.SetMessage("miss Email or Password")
+		this.Data["json"] = resp
+		this.ServeJSON()
+		return
+	}
+
+	user := &models.User{Email: email, Password: pwd}
+
+	// 检查邮箱、密码
 	err = storage.CheckEmailPwd(user)
 	if err == nil {
-		log.Info("Sign In Success:", user.String())
 		if user.Group == models.UserGroupNoActived {
-			resp.SetStatus(http.StatusUnauthorized)
-			resp.SetMessage("user not actived")
-			this.Data["json"] = resp
-			this.ServeJSON()
-			return
-		}
-
-		durationInt, err := strconv.Atoi(duration)
-		if err != nil {
-			resp.SetStatus(StatusUnprocessableEntity)
-			resp.SetMessage("duration must type of int")
+			resp.SetStatus(StatusUserNotActivated)
+			resp.SetMessage(StatusText(StatusUserNotActivated))
 			this.Data["json"] = resp
 			this.ServeJSON()
 			return
@@ -86,7 +82,6 @@ func (this *SignInHandler) SignIn() {
 		auth := &models.Auth{Uid: user.Id, Token: token, Server: web, Status: "ok", Type: models.AuthTypeUserSignIn, ExpiryDate: expiry}
 		_, err = storage.AddNewAuth(auth)
 		if err != nil {
-			log.Error("save auth failed:", err)
 			resp.SetStatus(http.StatusInternalServerError)
 			resp.SetMessage("save token failed")
 			this.Data["json"] = resp
@@ -105,7 +100,7 @@ func (this *SignInHandler) SignIn() {
 
 	if err == storage.ErrNoRows {
 		log.Info("Sign In Err: Email or Password is wrong")
-		resp.SetStatus(StatusUserExist)
+		resp.SetStatus(StatusWrongUserNameOrPwd)
 		resp.SetMessage("Email or Password is wrong")
 		this.Data["json"] = resp
 		this.ServeJSON()
