@@ -7,21 +7,14 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"uauth/mtest"
 )
 
-const (
-	url = "http://localhost:" + mtest.SER_PORT
-)
-
-func TestSignUp(t *testing.T) {
-	signUpEmail := "liuchao0206@gmail.com"
-	signUpPass := "123456"
-	bodyStr := fmt.Sprintf("{\"Email\":\"%s\", \"Password\":\"%s\"}", signUpEmail, signUpPass)
+func TestSignIn(t *testing.T) {
+	bodyStr := "{\"Email\":\"work_test_b@163.com\", \"Password\":\"123456\"}"
 	body := ioutil.NopCloser(strings.NewReader(bodyStr))
 	client := &http.Client{}
 
-	reqs, _ := http.NewRequest("POST", url+"/uauth/signup", body)
+	reqs, _ := http.NewRequest("POST", url+"/uauth/signin", body)
 	reqs.Header.Set("Content-Type", "application/json")
 	resp, _ := client.Do(reqs)
 	defer resp.Body.Close()
@@ -36,4 +29,5 @@ func TestSignUp(t *testing.T) {
 	if remap["Message"] != "OK" {
 		t.Error("Message Expected:OK Actual:", remap["Message"])
 	}
+
 }

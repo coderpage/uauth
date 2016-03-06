@@ -25,14 +25,9 @@ func (resp Response) SetMessage(message interface{}) {
 	resp["Message"] = message
 }
 
-const (
-	StatusUnprocessableEntity = 422 // 无法处理的请求实体
-	StatusInvalidUserName     = 430 // 无效用户名
-	StatusInvalidPwd          = 431 // 无效密码
-	StatusUserExist           = 432 // 该用户已存在
-	StatusUserNotExist        = 433 // 用户不存在
-	StatusUkownError          = 434 // 未知错误
-)
+func (resp Response) SetData(name string, data interface{}) {
+	resp[name] = data
+}
 
 var log *logs.BeeLogger
 
